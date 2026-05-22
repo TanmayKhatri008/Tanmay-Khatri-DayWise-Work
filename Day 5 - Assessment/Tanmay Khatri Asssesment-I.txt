@@ -1,0 +1,364 @@
+PART - A
+ANSWER 1.
+List is an mutable and ordered collection of data . It also allows duplicate values.It can be used to store list of item as there could be multiple same items.
+Tuple is an immutable and ordered collection of data. It is used to store fixed values , which need not to be changed in future like a location on a map.
+Set is an unordered collection of unique values. No repeating values allowed and no fixed order. It usually used to prefer when we have to remove the duplicates from list like to find out unique items in the store.
+Dictionary is used to store key- value pairs. when we have to store multiple details of single identity like storing data of an employee or an student at that place we can use dictionary.
+
+
+
+ANSWER2.
+result =[number**2 for nuber in range (2,21,2)]
+
+
+ANSWER 3.
+import json
+def read_json_safely(path):
+    try:
+        file = open(path, "r")
+        data = json.load(file)
+        file.close()
+        return data
+
+    except FileNotFoundError:
+        return {} 
+    except json.JSONDecodeError:
+        return None
+
+
+
+
+ANSWER 4.
+a) It only allows 79 characters/line
+b)Always use snake_case , which increases the readability
+c) prefer to use PascalCase, it means the the function names start with capital letter combining another with beginning capital letter only.
+d) Use 4 spaces for each identation level.
+e) Leave 2-3 lines between top level functions.
+
+
+
+
+ANSWER 5.
+a) mkdir expense- tracker   // it is used to make the directory
+   cd expense- tracker   // it is used to go inside that file
+b) python3 -m venv venv // virtual environment created 
+source venv/bin activate  // virtual environment activated
+c) pip install requests pydantic
+d) pip freeze> requirements.txt
+
+
+
+
+ANSWER 6.
+import requests
+from pydantic import BaseModel
+import sys
+
+class GitUser(BaseModel):
+  id:int
+  type:str
+  name:str
+  
+url="https://api.github.com/users/anthropics"
+
+try:
+  response=requests.get(url)
+  if response.status_code!=200:
+    print("Request failed.....{reponse.status_code}")
+    sys.exit()
+    
+  user=GitUser(**response.json())
+  print(f"Name:, {user.name}")
+  print(f"Public repos:, {user.type}")
+  print(f"Total Followers:, {user.id}")
+  
+except Exception as error:
+  print(f"Error : {error}")
+
+
+
+
+
+ANSWER 7.
+API keys shouldn't be hardcoded because if the code is pushed to any public place like github or shared with other , the key become visible to everyone and can be stolen. In hardcoded , you need to edit source file each time which is a bigger headache too.
+".env"
+OPENAI_API_KEY= here we will insert the api key 
+"fetch.py"
+from dotenv import load_dotenv
+import os
+load_dotenv()
+import os
+API_KEY = os.getenv("OPENAI_API_KEY")
+
+
+
+ANSWER 8.
+*VALID*
+from pydantic import BaseModel, Field
+class WeatherReport(BaseModel):
+  city: str = Field(min_length=1)
+  temp_c: float = Field(ge=-50, le=60)
+  humidity: int = Field(ge=0, le=100)
+  conditions: list[str]
+
+weather = WeatherReport(
+    city="Bikaner",
+    temp_c=48,
+    humidity=47,
+    conditions=["sunny", "dusrty"]
+)
+
+print(weather)
+
+
+*INVALID*
+weather =WeatherReport(
+city=""
+temp_c:79
+humidity:40
+condition:20
+)
+
+
+
+
+ANSWER 9.
+without async/await: You order a food at restaurant and keep waiting for that order and do nothing else
+with aync/await: You order a food at restaurant until the order arrives , you are doing the office work of ListenFirstMedia
+thats the difference.
+CODE:
+import httpx
+
+async def fetch(url):
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        return data
+
+
+
+
+
+
+
+ANSWER 10:
+npm create vite@latest
+project name - intern-app
+select react
+then javascript
+cd intern-app
+npm i
+npm run dev
+
+
+
+
+
+
+ANSWER 11:
+errors in the jsx code mentioned below
+a)class -> className
+b) wrong closing tab for p
+c) onclick-> onClick
+
+CODE:
+function ProfileCard(props) {
+  return (
+    <div className="card">
+      <img src={props.avatar}  />
+      <h2>{props.name}</h2>
+      <p>Role: {props.role}</p>
+      <button onClick={props.onFollow}>Follow</button>
+    </div>
+  );
+}
+
+
+
+
+
+ANSWER 12:
+./components/Badge.jsx
+function Badge({ label, color = "#2E75B6" }) {
+  return (
+    <span style={{backgroundColor: color,color: "white",fontSize: "35px", paddingRight: "52px"}}>
+      {label}
+    </span>
+  );
+}
+
+export default Badge;
+
+App.jsx
+import Badge from "./components/Badge";
+
+function App() {
+  return (
+    <div>
+      <Badge label="React" color="blue" />
+      <Badge label="Python" color="green" />
+      <Badge label="JavaScript" />
+    </div>
+  );
+}
+
+export default App;
+
+
+
+
+
+
+ANSWER 13:
+Props  are values sent from one component to another component. They are used when we want to pass data and normally we do not change them. Example: sending a user's name to a profile card like `<ProfileCard name="Tanmay" />`.
+State  is data stored inside a component that can change while the app is running. When state changes, the component updates automatically. Example: using state for a counter that increases when a button is clicked.
+
+
+
+
+
+ANSWER 14:
+import { useState } from "react";
+function Counter() {
+  const [count, newCount] = useState(0);
+  const increase = () => {
+    newCount(count + 1);
+  };
+
+
+  const decrease = () => {
+    if (count > 0) {
+      newCount(count - 1);
+    }
+  };
+
+  const reset = () => {
+    newCount(0);
+  };
+
+  return (
+    <div>
+      <h2>{count}</h2>
+      <button onClick={increase}>+1</button>
+      <button onClick={decrease}>-1</button>
+      <button onClick={reset}>Reset</button>
+    </div>
+  );
+}
+
+export default Counter;
+
+
+
+
+ANSWER 15:
+In the given the the mistakes are written below
+a) there is no dependency in the useEffect , which can lead to re- rendering
+b) maps need a unique id to traverse through the data to identify each data uniquely
+
+CODE:
+import { useState, useEffect } from "react";
+
+function UserList() {
+  const [users, setUsers] = useState([]);
+  useEffect(() => {
+    fetch("https://api.example.com/users")
+      .then((r) => r.json())
+      .then((data) => setUsers(data));
+  }, []); // here we have inserted the dependency in useEffect
+
+  return (
+    <ul>
+      {users.map((u) => ( <li key={u.id}>{u.name}</li>))}// now map has unique id for eacgh name
+    </ul>);
+}
+
+export default UserList;
+
+
+
+
+
+
+
+
+ANSWER16.
+./components/SearchableList.jsx
+
+import { useState} from "react";
+import {useEffect} from "react";
+
+function SearchableList() {
+  const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("https://jsonplaceholder.typicode.com/users")
+      .then((res) => res.json())
+      .then((data) => {
+        setUsers(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Failed to load users");
+        setLoading(false);
+      });
+  }, []);
+
+  const filteredUsers = users.filter((user) =>
+    user.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div>
+      {loading && <h2>Loading...</h2>}
+      {error && <h2>{error}</h2>}
+
+      {!loading && !error && (
+        <>
+          <input
+            type="text"
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}/>
+
+          {filteredUsers.length === 0 ? (
+            <p>No users found</p>
+          ) : (
+            <ul>
+              {filteredUsers.map((user) => (
+                <li key={user.id}>{user.name}</li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}</div>
+  );
+}
+export default SearchableList;
+
+
+
+App.jsx
+
+import SearchableList from "./SearchableList";
+function App() {
+  return (
+    <div>
+      <h1>Users List</h1>
+      <SearchableList />
+    </div>
+  );
+}
+export default App;
+
+
+
+
+
+
+
+
