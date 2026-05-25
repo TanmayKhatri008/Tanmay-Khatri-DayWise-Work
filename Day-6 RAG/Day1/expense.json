@@ -1,0 +1,21 @@
+{
+    "last_entry": 4,
+    "1": {
+        "description": "qeq24",
+        "amount": 1234.0,
+        "category": "qwe",
+        "date": "18-05-2026"
+    },
+    "3": {
+        "description": "chhole bhature",
+        "amount": 80.0,
+        "category": "food",
+        "date": "18-05-2026"
+    },
+    "4": {
+        "description": "train ticket",
+        "amount": 150.0,
+        "category": "Travel",
+        "date": "12-04-2026"
+    }
+}

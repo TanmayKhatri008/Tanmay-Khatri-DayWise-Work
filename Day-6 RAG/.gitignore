@@ -1,0 +1,13 @@
+.env
+Day2/.env
+
+venv
+venv/
+
+node_modules
+node_modules/
+Day3/node_modules/
+
+__pycache__
+
+Day6/db/

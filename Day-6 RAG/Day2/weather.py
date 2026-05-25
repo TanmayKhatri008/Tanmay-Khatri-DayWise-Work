@@ -1,0 +1,121 @@
+import requests
+from dotenv  import load_dotenv
+import os
+from pydantic import BaseModel
+import json
+
+load_dotenv()
+api_key = os.getenv("WEATHER_API_KEY")
+
+
+class Location(BaseModel):
+    name:str
+    country:str
+    localtime:str
+
+class Condition(BaseModel):
+    text:str
+
+class AQI(BaseModel):
+    co: float
+    no2: float
+    o3: float
+    so2: float
+
+class Current(BaseModel):
+    temp_c: float
+    feelslike_c: float
+    humidity: float
+    wind_kph: float
+    wind_dir: str
+    air_quality:AQI
+    uv: float
+    vis_km: float
+    pressure_mb: float
+    condition: Condition
+
+
+class Report(BaseModel):
+    location: Location
+    current: Current
+
+def save_report(report):
+    path = f"Day2\\{report.location.name}.json"
+    with open(path, "w") as file:
+        json.dump(report.model_dump(), file, indent=4)
+
+def get_city():
+    return  input("Enter a city: ").strip().capitalize()
+
+def printf(data: Report):
+    # Separator for clean layout
+    border = "=" * 55
+    
+    print(f"\n{border}")
+    print(f" LIVE WEATHER REPORT: {data.location.name.upper()}, {data.location.country.upper()}")
+    print(f" Local Time: {data.location.localtime}")
+    print(f"{border}")
+    
+    # Core Metrics
+    print(f" Current Condition : {data.current.condition.text}")
+    print(f" Temperature       : {data.current.temp_c}°C")
+    print(f" Feels Like        : {data.current.feelslike_c}°C")
+    
+    # Environment Details
+    print(f" Humidity          : {data.current.humidity}%")
+    print(f" Wind              : {data.current.wind_kph} km/h ({data.current.wind_dir})")
+    print(f" Visibility        : {data.current.vis_km} km")
+    print(f" UV Index          : {data.current.uv}")
+    
+    # Air Quality Metrics (Rounded to 2 decimal places using :.2f)
+    print(f"{border}")
+    print(f" AIR QUALITY METRICS (µg/m³):")
+    print(f" • Carbon Monoxide (CO)  : {data.current.air_quality.co:.2f}")
+    print(f" • Nitrogen Dioxide (NO2): {data.current.air_quality.no2:.2f}")
+    print(f" • Ozone (O3)            : {data.current.air_quality.o3:.2f}")
+    print(f" • Sulfur Dioxide (SO2)  : {data.current.air_quality.so2:.2f}")
+    print(f"{border}\n")
+
+def get_weather(city):
+    details  = requests.get(
+        "http://api.weatherapi.com/v1/current.json",
+        params = {"key":api_key,
+                  "q":city,
+                  "aqi": "yes"
+                  }
+    )
+    resp = details.json()
+    validated = Report.model_validate(resp)
+    printf(validated)
+    save_report(validated)
+
+
+
+
+
+
+details = '''
+=================Welcome to weather application=====================
+1. See current weather details of a city
+2. See current weather reports of multiple cities
+3. Exit
+'''
+
+while True:
+    print(details)
+
+    choice = int(input("Enter choice: "))
+
+    if choice == 1:
+        city = get_city()
+        get_weather(city)
+
+    elif choice == 2:
+        num = int(input("Enter number of cities: "))
+        cities = [get_city() for _ in range(num)]
+        for city in cities:
+            get_weather(city)
+
+    elif choice == 3:
+        print("Thank you for using !!!")
+        break
