@@ -1,0 +1,1 @@
+Work from home is allowed two days per week.

@@ -1,0 +1,1 @@
+Employees must complete a six month probation period.

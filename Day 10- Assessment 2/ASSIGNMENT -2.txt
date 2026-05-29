@@ -1,0 +1,343 @@
+ASSIGNMENT -2
+
+
+ANS1.
+RAG helps solve two common problems with LLMs. 
+1) LLMs only know what they learned during training, so they can't answer questions about recent events or private documents they have never seen.
+2) They sometimes make up information and present it as fact. RAG fixes this by searching for relevant documents before generating an answer. 
+It finds useful information, gives it to the model as context, and then the model uses that information to respond. Instead of relying only on its memory, the model can refer to actual documents, which makes answers more accurate, reduces hallucinations, and allows it to work with up-to-date or private data without retraining.
+
+
+
+ANS2.
+
+(a) Embedding: An embedding is a list of numbers that represents the meaning of a piece of text. It helps computers understand and compare text by placing similar sentences close to each other in a mathematical space.
+
+(b) Vector Similarity: Vector similarity measures how similar two embeddings are. A common method is cosine similarity, which checks the angle between two vectors—the smaller the angle, the more similar the texts are.
+
+(c) Chunk Size: Chunk size is the amount of text placed in a single chunk when a document is split into smaller parts. It is usually measured in tokens or characters.
+
+(d) Chunk Overlap: Chunk overlap is the portion of text that is repeated between two consecutive chunks. This helps preserve context and prevents important information from being lost at the split points.
+
+(e) Top-k Retrieval:  Top-k retrieval means selecting the **k most relevant chunks** for a query based on similarity scores. Instead of searching through all chunks, the system returns only the best matches. 
+
+
+
+
+ANS3.
+
+If we use a chunk size of 2000 and overlap of 0, several problems can occur. First, important information may be lost at chunk boundaries. If an answer is split between two chunks, one chunk might contain the beginning while the other contains the ending, making it difficult for the model to retrieve the complete answer. Second, the chunks become too large. Since a 2000-token chunk can contain multiple unrelated topics or answers, retrieving one chunk may bring in a lot of unnecessary information, which can confuse the model and reduce answer quality. Third, similarity search becomes less accurate because the embedding of a very large chunk represents many different ideas at once. As a result, the specific information relevant to the query may get diluted. A better approach is to use a chunk size of 400 and a chunk overlap of 80. This keeps each chunk focused on a single topic while the overlap ensures that important context is preserved between neighboring chunks, improving both retrieval accuracy and answer quality. 
+
+
+
+
+ANS4.
+import chromadb
+
+def embed(text):
+    return [0.1, 0.2, 0.3]
+
+docs = [
+    "Python is a programming language.",
+    "Machine learning learns from data.",
+    "ChromaDB is a vector database.",
+]
+
+embeddings = [embed(doc) for doc in docs]
+client = chromadb.Client()
+collection = client.create_collection("my_docs")
+
+collection.add(ids=["1", "2", "3"], documents=docs, embeddings=embeddings)
+query = "What is a vector database?"
+query_embedding = embed(query)
+
+result = collection.query(query_embeddings=[query_embedding], n_results=2)
+print(result["documents"][0])
+
+
+
+
+
+
+
+ANS 5.
+Improve the quality of retrieved information – Instead of relying only on the first few results, retrieve a slightly larger set of documents and then re-rank them using a cross-encoder. This helps ensure that the most relevant chunks are passed to the model, reducing the chances of it being distracted by unrelated information.
+Use clear instructions in the prompt – Tell the model exactly how it should answer. For example, instruct it to use only the provided context and to respond with "I don't know" if the answer cannot be found there. This helps keep the response grounded in the source material and reduces hallucinations.
+Regularly evaluate the system – Use evaluation tools such as RAGAS to check whether the model's answers are actually supported by the retrieved documents. Monitoring these scores over time helps identify problems early and ensures that updates to the system do not reduce answer quality.
+
+
+
+
+
+
+ANS 6.
+LangChain Expression Language (LCEL) is a simple way to connect different LangChain components, such as prompts, language models, retrievers, and output parsers, into a single workflow. It uses the | operator to pass the output of one component directly to the next, similar to how pipes work in the command line. This makes the code much easier to read and understand because the entire flow can be seen in one line, such as prompt | model | parser. Compared to manually calling .invoke() on each component, LCEL is cleaner, requires less code, and is easier to maintain. It also provides useful features like streaming responses, asynchronous execution, and automatic tracing with LangSmith without requiring additional setup.
+
+
+
+
+
+
+
+
+ANS7.
+from dotenv import load_dotenv
+
+from langchain_mistralai import ChatMistralAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+load_dotenv()
+
+prompt = ChatPromptTemplate.from_template("Write a one-sentence tagline for: {topic}")
+
+model = ChatMistralAI(model="mistral-large-latest", temperature=0.7)
+parser = StrOutputParser()
+
+chain = prompt | model | parser
+result = chain.invoke({"topic": "electric scooters"})
+
+print(result)
+
+
+
+
+
+
+
+ANS8.
+from langchain_mistralai import ChatMistralAI
+from langchain_core.prompts import PromptTemplate
+from langchain.output_parsers import PydanticOutputParser
+from pydantic import BaseModel, Field
+
+class MovieReview(BaseModel):
+    title: str = Field(description="Title of the movie")
+    rating: int = Field(description="Rating from 1 to 10", ge=1, le=10)
+    one_line_review: str = Field(description="One sentence review")
+
+parser = PydanticOutputParser(pydantic_object=MovieReview)
+prompt = PromptTemplate(
+    template="""
+    Review the movie '{movie}'.
+
+    {format_instructions}
+    """,
+    input_variables=["movie"],
+    partial_variables={"format_instructions": parser.get_format_instructions()},
+)
+llm = ChatMistralAI(model="mistral-large-latest")
+chain = prompt | llm | parser
+review = chain.invoke({"movie": "Interstellar"})
+
+print(review.title)
+print(review.rating)
+print(review.one_line_review)
+
+
+
+
+
+
+ANS9.
+(a) Loading the PDF
+The PDF is first loaded into the application using PyPDFLoader from langchain_community.document_loaders. This extracts the text and converts it into LangChain document objects that can be processed further.
+
+(b) Splitting the Content into Chunks
+Since large documents are difficult for language models to handle efficiently, the content is divided into smaller, manageable pieces using RecursiveCharacterTextSplitter from langchain_text_splitters.
+
+(c) Creating Embeddings
+Each chunk is then converted into a numerical representation called an embedding. This can be done using OpenAIEmbeddings or HuggingFaceEmbeddings, allowing the system to understand and compare the semantic meaning of the text.
+
+(d) Storing Data in a Vector Database
+The generated embeddings are stored in Chroma, a vector database that enables fast and efficient similarity searches across document chunks.
+
+(e) Retrieving Relevant Information
+When a user asks a question, the vector database searches for the most relevant chunks. This is handled through vectorstore.as_retriever(), which creates a VectorStoreRetriever responsible for fetching context related to the query.
+
+(f) Building the RAG Chain
+Finally, the retrieved context, user question, prompt template, language model, and output parser are connected together using LangChain's Expression Language (LCEL). Components such as RunnablePassthrough, ChatPromptTemplate, the chosen language model (Mistral or OpenAI), and StrOutputParser work together to generate a context-aware response.
+
+
+
+
+
+
+
+
+
+ANS10.
+A chain is a simple, step-by-step workflow where data moves through a predefined sequence of operations. Every request follows the exact same path from start to finish, with no ability to make decisions, branch into different paths, or repeat steps.
+A graph, however, is much more flexible. Instead of following a fixed route, it can decide what to do next based on the current state of execution. This allows it to branch into different paths, loop back to previous steps, and dynamically choose actions when needed.
+For example, a chain can take a question, send it to a language model, and return the response. However, if the model needs additional information, the chain cannot decide on its own to fetch that information first. A graph can handle this situation naturally. An agent node can determine whether more information is required and, through a conditional edge, either send execution to a tool node to retrieve data or proceed directly to the final response. After using the tool, the workflow can loop back to the agent, allowing it to continue reasoning with the newly acquired information.
+This ability to make decisions, use tools when necessary, and repeat steps until a task is completed is what makes graphs ideal for building intelligent agents, whereas chains are better suited for straightforward, predictable workflows.
+
+
+
+
+
+
+
+
+
+ANS11.
+State – The state acts as a shared storage area that contains all the information needed by the graph. Every node can read data from it and update it as the workflow progresses.
+Nodes – Nodes are Python functions that perform specific tasks, such as calling an LLM, using a tool, or processing data. They receive the current state, perform their work, and return any changes that should be added to the state.
+Edges – Edges define the fixed path between nodes. Once a node finishes its task, an edge determines which node should run next.
+Conditional Edges – Unlike regular edges, conditional edges make decisions based on the current state. They can route execution to different nodes, allowing the graph to branch, make decisions, or even loop until a condition is met.
+
+
+
+
+
+
+
+
+
+
+ANS12.
+from typing import TypedDict, List
+from langgraph.graph import StateGraph, START, END
+
+
+class State(TypedDict):
+    messages: List[str]
+
+
+def greet(state: State) -> dict:
+    return {"messages": state["messages"] + ["Hello!"]}
+
+
+def farewell(state: State) -> dict:
+    return {"messages": state["messages"] + ["Goodbye!"]}
+
+
+builder = StateGraph(State)
+builder.add_node("greet", greet)
+builder.add_node("farewell", farewell)
+
+builder.add_edge(START, "greet")
+builder.add_edge("greet", "farewell")
+builder.add_edge("farewell", END)
+
+graph = builder.compile()
+
+result = graph.invoke({"messages": []})
+print(result["messages"])  # ['Hello!', 'Goodbye!']
+
+
+
+
+
+
+
+
+
+
+
+ANS 13.
+State shape:
+{ messages: List[AnyMessage], tool_call: Optional[str], answer: Optional[str] }
+Nodes:
+• agent — calls the LLM with the current messages; if the model decides to use a tool it sets tool_call in the state, otherwise it writes the final answer to answer.
+• tool — reads tool_call, executes the relevant function (e.g. web search), appends the result as a ToolMessage to messages, clears tool_call.
+• end — terminal node that just outputs the final answer.
+
+Conditional edge (out of agent):
+def should_call_tool(state):
+    if state.get("tool_call"):
+        return "tool"  # go execute the tool
+    return END        
+
+Loop termination: After the tool node runs, it routes back to agent. The loop terminates when the agent no longer sets tool_call — either because it has enough information to answer, or because a max_iterations counter in the state has been reached (e.g. if iterations >= 5: return END). This hard cap prevents infinite loops.
+
+
+
+
+
+
+ANS 14.
+Explaining MCP (Model Context Protocol)
+
+Think of MCP as a universal connector between AI applications and external tools. Without MCP, every AI assistant would need a separate integration for every database, API, or service it wants to use. As the number of tools grows, managing all those custom connections becomes difficult and time-consuming. MCP solves this problem by providing a common standard that allows any MCP-compatible AI application to communicate with any MCP-compatible tool server without requiring custom integrations.
+
+There are three main parts in MCP. The host is the application that runs the AI, such as a chatbot or desktop assistant, and is responsible for managing the user interaction. Inside the host is the client, which handles communication using the MCP protocol. The server is an external service that provides access to specific capabilities, such as a database, file system, or third-party API. A single host can connect to multiple servers and use their capabilities when needed.
+
+An MCP server can provide three types of functionality. **Tools** are functions that the AI can call to perform actions or retrieve information. 
+Resources are read-only sources of information, such as files or database records, that can be used as context. Prompts are reusable prompt templates that can be called by name, making it easier to perform common tasks consistently. Together, these components make it much easier for AI systems to access and use external data and services in a standardized way.
+
+
+
+
+
+
+
+
+
+
+ANS 15.
+ MCP Tool vs MCP Resource
+
+An MCP Tool is something the AI can actively use to perform a task or fetch information. It works like a function that takes input, does some processing, and returns a result. For example, a `search_web` tool might accept a search query and return the latest search results from the internet. Tools are useful when the AI needs to take an action or access dynamic, changing data.
+
+An MCP Resource, on the other hand, is a read-only source of information that the AI can access as context. It does not perform any action; it simply provides data when requested. For example, a resource located at `file://project/README.md` could expose the contents of a project's README file. Resources are ideal for providing static information such as documents, configuration files, or database records.
+
+In simple terms, a tool is used to do something, while a resource is used to read something.
+
+
+
+
+
+
+
+
+
+
+
+ANS 16.
+from mcp.server import Server
+from mcp.server.stdio import stdio_server
+from mcp import types
+
+server = Server("word-count-server")
+
+@server.tool()
+async def word_count(text: str) -> str:
+    """Count the number of words in the provided text string.
+    Returns the word count as a plain string."""
+    count = len(text.split())
+    return str(count)
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(stdio_server(server))
+
+
+
+
+
+
+
+
+
+
+ANS 17.
+1. Better Reusability
+
+With traditional function calling, tool definitions are usually tied to a specific model or SDK. If you decide to switch to a different model or build another application, you often have to recreate those integrations from scratch. MCP solves this problem by turning tools into independent servers. Once an MCP server is created, any MCP-compatible host or AI application can use it without additional integration work. This means you build the tool once and reuse it across different models and applications.
+
+2. Improved Security and Separation of Responsibilities
+
+In raw function calling, the model can trigger code that runs directly inside your application's process. This can make it harder to control and monitor what the model is allowed to do. With MCP, tools run as separate servers outside the main application. The host decides which servers it can connect to and what capabilities are available. Because of this separation, it becomes much easier to manage permissions, audit tool usage, and reduce risks when working with sensitive resources such as databases, APIs, or user data.
+
+In simple terms: Function calling tightly couples tools to a specific application, while MCP makes tools reusable, easier to manage, and more secure by running them as independent services. 
+
+
+
+
+
+
+
+
+
+ANS 18.
